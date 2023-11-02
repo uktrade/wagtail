@@ -125,49 +125,79 @@ class Indexed:
     @classmethod
     def check(cls, **kwargs):
         errors = super().check(**kwargs)
-        errors.extend(cls._check_search_fields(**kwargs))
+        errors.extend(cls._check_search_fields_contains_real_fields(**kwargs))
+        errors.extend(cls._check_search_fields_are_not_redefined(**kwargs))
         return errors
 
     @classmethod
-    def _check_search_fields(cls, **kwargs):
+    def _check_search_fields_contains_real_fields(cls, **kwargs):
         errors = []
         for field in cls.get_search_fields():
-            message = "{model}.search_fields contains non-existent field '{name}'"
-            if not cls._has_field(field.field_name) and not cls._has_field(
-                field.model_field_name
-            ):
+            message = "search_fields contains non-existent field '{name}'"
+            search_field_parts = field.field_name.split(".")
+            if len(search_field_parts) == 1 and not cls._has_field(field.field_name):
                 errors.append(
                     checks.Warning(
-                        message.format(model=cls.__name__, name=field.field_name),
+                        message.format(name=field.field_name),
                         obj=cls,
                         id="wagtailsearch.W004",
                     )
                 )
+            elif len(search_field_parts) > 1:
+                if not cls._has_field(search_field_parts[0]):
+                    errors.append(
+                        checks.Warning(
+                            message.format(name=field.field_name),
+                            obj=cls,
+                            id="wagtailsearch.W004",
+                        )
+                    )
+
+            # TODO: Not sure that this makes sense - Cameron
+            # if not cls._has_field(field.field_name) and not cls._has_field(
+            #     field.model_field_name
+            # ):
+            #     errors.append(
+            #         checks.Warning(
+            #             message.format(name=field.field_name),
+            #             obj=cls,
+            #             id="wagtailsearch.W004",
+            #         )
+            #     )
+
+        return errors
+
+    @classmethod
+    def _check_search_fields_are_not_redefined(cls, **kwargs):
+        # TODO: Not sure that this makes sense - Cameron
+        errors = []
 
         parent_fields = []
         for parent_cls in cls.__bases__:
             parent_fields += getattr(parent_cls, "search_fields", [])
         model_fields = []
-        for field in cls.get_search_fields():
-            model_field_name = getattr(field, "model_field_name", None)
-            if not model_field_name:
-                model_field_name = field.field_name
-            if field not in parent_fields and model_field_name not in model_fields:
-                message = "indexed field '{name}' is defined in {model} and {parent}"
-                definition_model = field.get_definition_model(cls)
-                if definition_model != cls:
-                    errors.append(
-                        checks.Warning(
-                            message.format(
-                                model=cls.__name__,
-                                name=field.field_name,
-                                parent=definition_model.__name__,
-                            ),
-                            obj=cls,
-                            id="wagtailsearch.W005",
-                        )
-                    )
-                    model_fields.append(model_field_name)
+        # for field in cls.get_search_fields():
+        #     model_field_name = getattr(field, "model_field_name", None)
+        #     if not model_field_name:
+        #         model_field_name = field.field_name
+        #     if field not in parent_fields and model_field_name not in model_fields:
+        #         message = "indexed field '{name}' is defined in {model} and {parent}"
+        #         definition_model = field.get_definition_model(cls)
+        #         if definition_model != cls:
+        #             errors.append(
+        #                 checks.Warning(
+        #                     message.format(
+        #                         model=cls.__name__,
+        #                         name=field.field_name,
+        #                         parent=definition_model.__name__
+        #                         if definition_model
+        #                         else "None",
+        #                     ),
+        #                     obj=cls,
+        #                     id="wagtailsearch.W005",
+        #                 )
+        #             )
+        #             model_fields.append(model_field_name)
         return errors
 
     search_fields = []
