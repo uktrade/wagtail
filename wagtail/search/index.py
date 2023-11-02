@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Optional
+from typing import List, Optional
 from warnings import warn
 
 from django.apps import apps
@@ -487,7 +487,7 @@ class IndexedField(BaseField):
 
     def generate_fields(
         self, parent_field: Optional[BaseField] = None
-    ) -> list[BaseField]:
+    ) -> List[BaseField]:
         generated_fields = []
         field_name = self.model_field_name
         if parent_field:
