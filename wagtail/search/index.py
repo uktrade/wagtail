@@ -58,7 +58,7 @@ class Indexed:
         elif isinstance(field, RelatedFields):
             related_fields = {}
             for related_field in field.fields:
-                related_fields |= cls._get_search_field({}, related_field, field)
+                related_fields.update(**cls._get_search_field({}, related_field, field))
             field_dict[(RelatedFields, field.field_name)] = RelatedFields(
                 field.model_field_name, list(related_fields.values())
             )
@@ -71,7 +71,9 @@ class Indexed:
         search_fields = {}
 
         for field in cls.search_fields:
-            search_fields |= cls._get_search_field(search_fields, field, parent_field)
+            search_fields.update(
+                **cls._get_search_field(search_fields, field, parent_field)
+            )
 
         return list(search_fields.values())
 
