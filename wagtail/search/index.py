@@ -445,6 +445,13 @@ class IndexedField(BaseField):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        if not search_kwargs:
+            search_kwargs = {}
+        if not autocomplete_kwargs:
+            autocomplete_kwargs = {}
+        if not filter_kwargs:
+            filter_kwargs = {}
+
         self.boost = self.kwargs["boost"] = boost
         self.search = self.kwargs["search"] = search
         self.search_kwargs = self.kwargs["search_kwargs"] = search_kwargs
@@ -455,7 +462,9 @@ class IndexedField(BaseField):
         self.filter = self.kwargs["filter"] = filter
         self.filter_kwargs = self.kwargs["filter_kwargs"] = filter_kwargs
 
-    def generate_fields(self, parent_field: BaseField = None) -> list[BaseField]:
+    def generate_fields(
+        self, parent_field: Optional[BaseField] = None
+    ) -> list[BaseField]:
         generated_fields = []
         field_name = self.model_field_name
         if parent_field:
@@ -467,6 +476,8 @@ class IndexedField(BaseField):
             generated_fields.append(self.generate_autocomplete_field(field_name))
         if self.filter:
             generated_fields.append(self.generate_filter_field(field_name))
+
+        return generated_fields
 
     def generate_search_field(self, field_name: str) -> SearchField:
         return SearchField(
