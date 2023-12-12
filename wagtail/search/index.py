@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Optional
+from typing import List, Optional
 from warnings import warn
 
 from django.apps import apps
@@ -11,7 +11,6 @@ from django.db.models.fields.related import ForeignObjectRel, OneToOneRel, Relat
 from modelcluster.fields import ParentalManyToManyField
 
 from wagtail.search.backends import get_search_backends_with_name
-from wagtail.utils.deprecation import RemovedInWagtail60Warning
 
 logger = logging.getLogger("wagtail.search.index")
 
@@ -59,7 +58,7 @@ class Indexed:
         elif isinstance(field, RelatedFields):
             related_fields = {}
             for related_field in field.fields:
-                related_fields |= cls._get_search_field(related_field, field)
+                related_fields.update(**cls._get_search_field({}, related_field, field))
             field_dict[(RelatedFields, field.field_name)] = RelatedFields(
                 field.model_field_name, list(related_fields.values())
             )
@@ -72,7 +71,9 @@ class Indexed:
         search_fields = {}
 
         for field in cls.search_fields:
-            search_fields |= cls._get_search_field(search_fields, field, parent_field)
+            search_fields.update(
+                **cls._get_search_field(search_fields, field, parent_field)
+            )
 
         return list(search_fields.values())
 
@@ -125,49 +126,79 @@ class Indexed:
     @classmethod
     def check(cls, **kwargs):
         errors = super().check(**kwargs)
-        errors.extend(cls._check_search_fields(**kwargs))
+        errors.extend(cls._check_search_fields_contains_real_fields(**kwargs))
+        errors.extend(cls._check_search_fields_are_not_redefined(**kwargs))
         return errors
 
     @classmethod
-    def _check_search_fields(cls, **kwargs):
+    def _check_search_fields_contains_real_fields(cls, **kwargs):
         errors = []
         for field in cls.get_search_fields():
-            message = "{model}.search_fields contains non-existent field '{name}'"
-            if not cls._has_field(field.field_name) and not cls._has_field(
-                field.model_field_name
-            ):
+            message = "search_fields contains non-existent field '{name}'"
+            search_field_parts = field.field_name.split(".")
+            if len(search_field_parts) == 1 and not cls._has_field(field.field_name):
                 errors.append(
                     checks.Warning(
-                        message.format(model=cls.__name__, name=field.field_name),
+                        message.format(name=field.field_name),
                         obj=cls,
                         id="wagtailsearch.W004",
                     )
                 )
+            elif len(search_field_parts) > 1:
+                if not cls._has_field(search_field_parts[0]):
+                    errors.append(
+                        checks.Warning(
+                            message.format(name=field.field_name),
+                            obj=cls,
+                            id="wagtailsearch.W004",
+                        )
+                    )
+
+            # TODO: Not sure that this makes sense - Cameron
+            # if not cls._has_field(field.field_name) and not cls._has_field(
+            #     field.model_field_name
+            # ):
+            #     errors.append(
+            #         checks.Warning(
+            #             message.format(name=field.field_name),
+            #             obj=cls,
+            #             id="wagtailsearch.W004",
+            #         )
+            #     )
+
+        return errors
+
+    @classmethod
+    def _check_search_fields_are_not_redefined(cls, **kwargs):
+        # TODO: Not sure that this makes sense - Cameron
+        errors = []
 
         parent_fields = []
         for parent_cls in cls.__bases__:
             parent_fields += getattr(parent_cls, "search_fields", [])
         model_fields = []
-        for field in cls.get_search_fields():
-            model_field_name = getattr(field, "model_field_name", None)
-            if not model_field_name:
-                model_field_name = field.field_name
-            if field not in parent_fields and model_field_name not in model_fields:
-                message = "indexed field '{name}' is defined in {model} and {parent}"
-                definition_model = field.get_definition_model(cls)
-                if definition_model != cls:
-                    errors.append(
-                        checks.Warning(
-                            message.format(
-                                model=cls.__name__,
-                                name=field.field_name,
-                                parent=definition_model.__name__,
-                            ),
-                            obj=cls,
-                            id="wagtailsearch.W005",
-                        )
-                    )
-                    model_fields.append(model_field_name)
+        # for field in cls.get_search_fields():
+        #     model_field_name = getattr(field, "model_field_name", None)
+        #     if not model_field_name:
+        #         model_field_name = field.field_name
+        #     if field not in parent_fields and model_field_name not in model_fields:
+        #         message = "indexed field '{name}' is defined in {model} and {parent}"
+        #         definition_model = field.get_definition_model(cls)
+        #         if definition_model != cls:
+        #             errors.append(
+        #                 checks.Warning(
+        #                     message.format(
+        #                         model=cls.__name__,
+        #                         name=field.field_name,
+        #                         parent=definition_model.__name__
+        #                         if definition_model
+        #                         else "None",
+        #                     ),
+        #                     obj=cls,
+        #                     id="wagtailsearch.W005",
+        #                 )
+        #             )
+        #             model_fields.append(model_field_name)
         return errors
 
     search_fields = []
@@ -359,14 +390,8 @@ class BaseField:
 
 
 class SearchField(BaseField):
-    def __init__(self, field_name, boost=None, partial_match=False, **kwargs):
+    def __init__(self, field_name, boost=None, **kwargs):
         super().__init__(field_name, **kwargs)
-        if partial_match:
-            warn(
-                "The partial_match option on SearchField has no effect and will be removed. "
-                "Use AutocompleteField instead",
-                category=RemovedInWagtail60Warning,
-            )
         self.boost = boost
 
 
@@ -445,6 +470,13 @@ class IndexedField(BaseField):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        if not search_kwargs:
+            search_kwargs = {}
+        if not autocomplete_kwargs:
+            autocomplete_kwargs = {}
+        if not filter_kwargs:
+            filter_kwargs = {}
+
         self.boost = self.kwargs["boost"] = boost
         self.search = self.kwargs["search"] = search
         self.search_kwargs = self.kwargs["search_kwargs"] = search_kwargs
@@ -455,7 +487,9 @@ class IndexedField(BaseField):
         self.filter = self.kwargs["filter"] = filter
         self.filter_kwargs = self.kwargs["filter_kwargs"] = filter_kwargs
 
-    def generate_fields(self, parent_field: BaseField = None) -> list[BaseField]:
+    def generate_fields(
+        self, parent_field: Optional[BaseField] = None
+    ) -> List[BaseField]:
         generated_fields = []
         field_name = self.model_field_name
         if parent_field:
@@ -467,6 +501,8 @@ class IndexedField(BaseField):
             generated_fields.append(self.generate_autocomplete_field(field_name))
         if self.filter:
             generated_fields.append(self.generate_filter_field(field_name))
+
+        return generated_fields
 
     def generate_search_field(self, field_name: str) -> SearchField:
         return SearchField(

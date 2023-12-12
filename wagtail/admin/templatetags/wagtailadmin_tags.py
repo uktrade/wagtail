@@ -57,7 +57,10 @@ from wagtail.models import (
 from wagtail.permission_policies.pages import PagePermissionPolicy
 from wagtail.telepath import JSContext
 from wagtail.users.utils import get_gravatar_url
-from wagtail.utils.deprecation import RemovedInWagtail60Warning
+from wagtail.utils.deprecation import (
+    RemovedInWagtail60Warning,
+    RemovedInWagtail70Warning,
+)
 
 register = template.Library()
 
@@ -275,12 +278,6 @@ def hook_output(hook_name):
     """
     snippets = [fn() for fn in hooks.get_hooks(hook_name)]
 
-    if hook_name == "insert_editor_css" and snippets:
-        warn(
-            "The `insert_editor_css` hook is deprecated - use `insert_global_admin_css` instead.",
-            category=RemovedInWagtail60Warning,
-        )
-
     return mark_safe("".join(snippets))
 
 
@@ -301,7 +298,7 @@ class EscapeScriptNode(template.Node):
         super().__init__()
         warn(
             "The `escapescript` template tag is deprecated - use `template` elements instead.",
-            category=RemovedInWagtail60Warning,
+            category=RemovedInWagtail70Warning,
         )
         self.nodelist = nodelist
 
@@ -460,7 +457,7 @@ def page_listing_buttons(context, page, user):
             warn(
                 "`register_page_listing_buttons` hook functions should accept a `user` argument instead of `page_perms` -"
                 f" {hook.__module__}.{hook.__name__} needs to be updated",
-                category=RemovedInWagtail60Warning,
+                category=RemovedInWagtail70Warning,
             )
 
             page_perms = page.permissions_for_user(user)
@@ -476,7 +473,7 @@ def page_listing_buttons(context, page, user):
             warn(
                 "`construct_page_listing_buttons` hook functions should accept a `user` argument instead of `page_perms` -"
                 f" {hook.__module__}.{hook.__name__} needs to be updated",
-                category=RemovedInWagtail60Warning,
+                category=RemovedInWagtail70Warning,
             )
 
             page_perms = page.permissions_for_user(user)
@@ -504,7 +501,7 @@ def page_header_buttons(context, page, user, view_name):
             warn(
                 "`register_page_header_buttons` hook functions should accept a `user` argument instead of `page_perms` -"
                 f" {hook.__module__}.{hook.__name__} needs to be updated",
-                category=RemovedInWagtail60Warning,
+                category=RemovedInWagtail70Warning,
             )
 
             page_perms = page.permissions_for_user(user)
@@ -684,7 +681,7 @@ def versioned_static(path):
 
 
 @register.inclusion_tag("wagtailadmin/shared/icon.html", takes_context=False)
-def icon(name=None, classname=None, title=None, wrapped=False, class_name=None):
+def icon(name=None, classname=None, title=None, wrapped=False):
     """
     Abstracts away the actual icon implementation.
 
@@ -700,15 +697,6 @@ def icon(name=None, classname=None, title=None, wrapped=False, class_name=None):
     """
     if not name:
         raise ValueError("You must supply an icon name")
-
-    if class_name:
-        warn(
-            (
-                "Icon template tag `class_name` has been renamed to `classname`, please adopt the new usage instead. "
-                f'Replace `{{% icon ... class_name="{class_name}" %}}` with `{{% icon ... classname="{class_name}" %}}`'
-            ),
-            category=RemovedInWagtail60Warning,
-        )
 
     deprecated_icons = [
         "angle-double-left",
@@ -753,8 +741,7 @@ def icon(name=None, classname=None, title=None, wrapped=False, class_name=None):
 
     return {
         "name": name,
-        # supporting class_name for backwards compatibility
-        "classname": classname or class_name or "icon",
+        "classname": classname or "icon",
         "title": title,
         "wrapped": wrapped,
     }
