@@ -773,16 +773,18 @@ class TestElasticsearch7SearchQuery(TestCase):
 
         # Check it
         expected_result = {
-            "multi_match": {
-                "boost": 3.0,
-                "query": "Hello world",
-                "fields": [
-                    "title^2.0",
-                    "summary",
-                ],
-                "type": "phrase",
+            "dis_max": {
+                "queries": [
+                    {"match_phrase": {"title": {"boost": 6.0, "query": "Hello world"}}},
+                    {
+                        "match_phrase": {
+                            "summary": {"boost": 3.0, "query": "Hello world"}
+                        }
+                    },
+                ]
             }
         }
+
         self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
 
     def test_phrase_query_single_field(self):
@@ -910,14 +912,27 @@ class TestElasticsearch7SearchQuery(TestCase):
         )
 
         expected_result = {
-            "multi_match": {
-                "boost": 3.0,
-                "fields": [
-                    "title^2.0",
-                    "summary",
-                ],
-                "query": "Hello world",
-                "fuzziness": "AUTO",
+            "dis_max": {
+                "queries": [
+                    {
+                        "match": {
+                            "title": {
+                                "boost": 6.0,
+                                "fuzziness": "AUTO",
+                                "query": "Hello world",
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "summary": {
+                                "boost": 3.0,
+                                "fuzziness": "AUTO",
+                                "query": "Hello world",
+                            }
+                        }
+                    },
+                ]
             }
         }
         self.assertDictEqual(query_compiler.get_inner_query(), expected_result)

@@ -613,7 +613,7 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
             match_query["operator"] = query.operator
 
         if len(fields) == 1:
-            if fields[0].boost != 1.0:
+            if boost != 1.0 or fields[0].boost != 1.0:
                 match_query["boost"] = boost * fields[0].boost
             return {"match": {fields[0].field_name: match_query}}
         else:
@@ -624,7 +624,7 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
 
     def _compile_phrase_query(self, query, fields, boost=1.0):
         if len(fields) == 1:
-            if fields[0].boost != 1.0:
+            if boost != 1.0 or fields[0].boost != 1.0:
                 return {
                     "match_phrase": {
                         fields[0].field_name: {
@@ -732,9 +732,6 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
                 }
             }
 
-        elif isinstance(self.query, Boost):
-            return self._compile_query(self.query, fields)
-
         else:
             return self._join_and_compile_queries(self.query, fields)
 
@@ -748,6 +745,9 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
             field_queries = []
             for field in fields:
                 field_queries.append(self._compile_query(query, field, boost))
+
+            if len(field_queries) == 1:
+                return field_queries[0]
 
             return {"dis_max": {"queries": field_queries}}
 
