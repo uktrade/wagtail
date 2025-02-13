@@ -3,10 +3,10 @@ name: Wagtail CI
 on:
   push:
     paths-ignore:
-      - "docs/**"
+      - 'docs/**'
   pull_request:
     paths-ignore:
-      - "docs/**"
+      - 'docs/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -43,216 +43,216 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  # test-sqlite:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - python: '3.13'
-  #           django: 'Django>=5.1,<5.2'
-  #           check_template_number_format: '1'
-  #           parallel: '--parallel'
+  test-sqlite:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python: '3.13'
+            django: 'Django>=5.1,<5.2'
+            check_template_number_format: '1'
+            parallel: '--parallel'
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         persist-credentials: false
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ matrix.python }}
-  #         cache: 'pip'
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install -e '.[testing]' --config-settings editable_mode=strict
-  #         pip install "${{ matrix.django }}"
-  #     - name: Test
-  #       run: |
-  #         WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
-  #         coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
-  #       env:
-  #         DATABASE_ENGINE: django.db.backends.sqlite3
-  #         USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
-  #         WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT: ${{ matrix.check_template_number_format }}
-  #     - name: Upload coverage data
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
-  #         path: .coverage.*
-  #         include-hidden-files: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[testing]' --config-settings editable_mode=strict
+          pip install "${{ matrix.django }}"
+      - name: Test
+        run: |
+          WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
+          coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
+        env:
+          DATABASE_ENGINE: django.db.backends.sqlite3
+          USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
+          WAGTAIL_CHECK_TEMPLATE_NUMBER_FORMAT: ${{ matrix.check_template_number_format }}
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
+          path: .coverage.*
+          include-hidden-files: true
 
-  # test-postgres:
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: ${{ matrix.experimental }}
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - python: '3.9'
-  #           django: 'Django>=4.2,<4.3'
-  #           psycopg: 'psycopg2>=2.6'
-  #           experimental: false
-  #           parallel: '--parallel'
-  #         - python: '3.13'
-  #           django: 'Django>=5.1,<5.2'
-  #           psycopg: 'psycopg>=3.1.8'
-  #           postgres: 'postgres:15'
-  #           notz: notz
-  #           experimental: false
-  #           parallel: '--parallel'
-  #         - python: '3.12'
-  #           django: 'git+https://github.com/django/django.git@stable/5.2.x#egg=Django'
-  #           psycopg: 'psycopg>=3.1.8'
-  #           postgres: 'postgres:15'
-  #           experimental: true
-  #         - python: '3.13'
-  #           django: 'git+https://github.com/django/django.git@main#egg=Django'
-  #           psycopg: 'psycopg>=3.1.8'
-  #           experimental: true
-  #           postgres: 'postgres:latest'
-  #           parallel: '--parallel'
-  #           install_extras: |
-  #             pip uninstall -y django-modelcluster
-  #             pip install "git+https://github.com/wagtail/django-modelcluster.git@main#egg=django-modelcluster"
-  #   services:
-  #     postgres:
-  #       image: ${{ matrix.postgres || 'postgres:12' }}
-  #       env:
-  #         POSTGRES_PASSWORD: postgres
-  #       ports:
-  #         - 5432:5432
-  #       options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+  test-postgres:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        include:
+          - python: '3.9'
+            django: 'Django>=4.2,<4.3'
+            psycopg: 'psycopg2>=2.6'
+            experimental: false
+            parallel: '--parallel'
+          - python: '3.13'
+            django: 'Django>=5.1,<5.2'
+            psycopg: 'psycopg>=3.1.8'
+            postgres: 'postgres:15'
+            notz: notz
+            experimental: false
+            parallel: '--parallel'
+          - python: '3.12'
+            django: 'git+https://github.com/django/django.git@stable/5.2.x#egg=Django'
+            psycopg: 'psycopg>=3.1.8'
+            postgres: 'postgres:15'
+            experimental: true
+          - python: '3.13'
+            django: 'git+https://github.com/django/django.git@main#egg=Django'
+            psycopg: 'psycopg>=3.1.8'
+            experimental: true
+            postgres: 'postgres:latest'
+            parallel: '--parallel'
+            install_extras: |
+              pip uninstall -y django-modelcluster
+              pip install "git+https://github.com/wagtail/django-modelcluster.git@main#egg=django-modelcluster"
+    services:
+      postgres:
+        image: ${{ matrix.postgres || 'postgres:12' }}
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         persist-credentials: false
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ matrix.python }}
-  #         cache: 'pip'
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install "${{ matrix.psycopg }}"
-  #         pip install -e '.[testing]' --config-settings editable_mode=strict
-  #         pip install "${{ matrix.django }}"
-  #         ${{ matrix.install_extras }}
-  #     - name: Test
-  #       run: |
-  #         WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
-  #         coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
-  #       env:
-  #         DATABASE_ENGINE: django.db.backends.postgresql
-  #         DATABASE_HOST: localhost
-  #         DATABASE_USER: postgres
-  #         DATABASE_PASSWORD: postgres
-  #         USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
-  #         DISABLE_TIMEZONE: ${{ matrix.notz }}
-  #     - name: Upload coverage data
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
-  #         path: .coverage.*
-  #         include-hidden-files: true
-  #     - name: Test project template
-  #       if: ${{ matrix.experimental }}
-  #       env:
-  #         PYTHONWARNINGS: error
-  #       run: |
-  #         wagtail start testproject
-  #         cd testproject
-  #         tee -a testproject/settings/local.py << EOF
-  #         from warnings import filterwarnings
-  #         SILENCED_SYSTEM_CHECKS = ["wagtailadmin.W001"]
-  #         # Remove when all experimental jobs use Django >= 6.0
-  #         filterwarnings(
-  #             "ignore", "The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated."
-  #         )
-  #         FORMS_URLFIELD_ASSUME_HTTPS = True
-  #         EOF
-  #         python manage.py makemigrations --check --dry-run
-  #         python manage.py migrate
-  #         python manage.py check --fail-level WARNING
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "${{ matrix.psycopg }}"
+          pip install -e '.[testing]' --config-settings editable_mode=strict
+          pip install "${{ matrix.django }}"
+          ${{ matrix.install_extras }}
+      - name: Test
+        run: |
+          WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
+          coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
+        env:
+          DATABASE_ENGINE: django.db.backends.postgresql
+          DATABASE_HOST: localhost
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: postgres
+          USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
+          DISABLE_TIMEZONE: ${{ matrix.notz }}
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
+          path: .coverage.*
+          include-hidden-files: true
+      - name: Test project template
+        if: ${{ matrix.experimental }}
+        env:
+          PYTHONWARNINGS: error
+        run: |
+          wagtail start testproject
+          cd testproject
+          tee -a testproject/settings/local.py << EOF
+          from warnings import filterwarnings
+          SILENCED_SYSTEM_CHECKS = ["wagtailadmin.W001"]
+          # Remove when all experimental jobs use Django >= 6.0
+          filterwarnings(
+              "ignore", "The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated."
+          )
+          FORMS_URLFIELD_ASSUME_HTTPS = True
+          EOF
+          python manage.py makemigrations --check --dry-run
+          python manage.py migrate
+          python manage.py check --fail-level WARNING
 
-  # test-mysql:
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: ${{ matrix.experimental }}
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - python: '3.10'
-  #           django: 'Django>=4.2,<4.3'
-  #           experimental: false
-  #         - python: '3.11'
-  #           django: 'Django>=4.2,<4.3'
-  #           experimental: false
-  #           mysql: 'mariadb:10.5'
-  #         - python: '3.12'
-  #           django: 'Django>=5.1,<5.2'
-  #           experimental: false
-  #           mysql: 'mariadb:11.4'
-  #           emailuser: emailuser
-  #         - python: '3.12'
-  #           django: 'Django>=5.1,<5.2'
-  #           experimental: false
-  #           parallel: '--parallel'
-  #           mysql: 'mysql:8.4'
-  #           emailuser: emailuser
-  #   services:
-  #     mysql:
-  #       image: ${{ matrix.mysql || 'mysql:8.0' }}
-  #       env:
-  #         MARIADB_ROOT_PASSWORD: root
-  #         MYSQL_ROOT_PASSWORD: root
-  #         MYSQL_ALLOW_EMPTY_PASSWORD: yes
-  #         MYSQL_DATABASE: wagtail
-  #         HEALTH_CMD: ${{ startsWith(matrix.mysql, 'mariadb') && 'healthcheck.sh --connect --innodb_initialized' || 'mysqladmin --protocol=tcp ping' }}
-  #       ports:
-  #         - 3306:3306
-  #       options: --health-cmd=$HEALTH_CMD --health-interval=10s --health-timeout=5s --health-retries=3 --cap-add=sys_nice
+  test-mysql:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        include:
+          - python: '3.10'
+            django: 'Django>=4.2,<4.3'
+            experimental: false
+          - python: '3.11'
+            django: 'Django>=4.2,<4.3'
+            experimental: false
+            mysql: 'mariadb:10.5'
+          - python: '3.12'
+            django: 'Django>=5.1,<5.2'
+            experimental: false
+            mysql: 'mariadb:11.4'
+            emailuser: emailuser
+          - python: '3.12'
+            django: 'Django>=5.1,<5.2'
+            experimental: false
+            parallel: '--parallel'
+            mysql: 'mysql:8.4'
+            emailuser: emailuser
+    services:
+      mysql:
+        image: ${{ matrix.mysql || 'mysql:8.0' }}
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: wagtail
+          HEALTH_CMD: ${{ startsWith(matrix.mysql, 'mariadb') && 'healthcheck.sh --connect --innodb_initialized' || 'mysqladmin --protocol=tcp ping' }}
+        ports:
+          - 3306:3306
+        options: --health-cmd=$HEALTH_CMD --health-interval=10s --health-timeout=5s --health-retries=3 --cap-add=sys_nice
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         persist-credentials: false
-  #     - name: Set up Python ${{ matrix.python }}
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{ matrix.python }}
-  #         cache: 'pip'
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install "mysqlclient>=1.4,<2"
-  #         pip install -e '.[testing]' --config-settings editable_mode=strict
-  #         pip install "${{ matrix.django }}"
-  #     - name: Test
-  #       run: |
-  #         WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
-  #         coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
-  #       env:
-  #         DATABASE_ENGINE: django.db.backends.mysql
-  #         DATABASE_HOST: '127.0.0.1'
-  #         DATABASE_USER: root
-  #         DATABASE_PASSWORD: root
-  #         USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
-  #         DISABLE_TIMEZONE: ${{ matrix.notz }}
-  #     - name: Upload coverage data
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
-  #         path: .coverage.*
-  #         include-hidden-files: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "mysqlclient>=1.4,<2"
+          pip install -e '.[testing]' --config-settings editable_mode=strict
+          pip install "${{ matrix.django }}"
+      - name: Test
+        run: |
+          WAGTAIL_FAIL_ON_VERSIONED_STATIC=1 DJANGO_SETTINGS_MODULE=wagtail.test.settings django-admin check
+          coverage run --parallel-mode --source wagtail runtests.py ${{ matrix.parallel }}
+        env:
+          DATABASE_ENGINE: django.db.backends.mysql
+          DATABASE_HOST: '127.0.0.1'
+          DATABASE_USER: root
+          DATABASE_PASSWORD: root
+          USE_EMAIL_USER_MODEL: ${{ matrix.emailuser }}
+          DISABLE_TIMEZONE: ${{ matrix.notz }}
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ github.job }}-${{ strategy.job-index }}
+          path: .coverage.*
+          include-hidden-files: true
 
   test-sqlite-elasticsearch8:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - python: "3.13"
-            django: "Django>=5.1,<5.2"
+          - python: '3.13'
+            django: 'Django>=5.1,<5.2'
             emailuser: emailuser
     steps:
       - name: Configure sysctl limits
@@ -268,7 +268,7 @@ jobs:
           container port: 9200
           host node port: 9300
           node port: 9300
-          discovery type: "single-node"
+          discovery type: 'single-node'
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -276,7 +276,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-          cache: "pip"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -303,8 +303,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: "3.9"
-            django: "Django>=4.2,<4.3"
+          - python: '3.9'
+            django: 'Django>=4.2,<4.3'
             experimental: false
 
     services:
@@ -334,7 +334,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-          cache: "pip"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -365,8 +365,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: "3.10"
-            django: "Django>=5.1,<5.2"
+          - python: '3.10'
+            django: 'Django>=5.1,<5.2'
             experimental: false
 
     steps:
@@ -386,7 +386,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-          cache: "pip"
+          cache: 'pip'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -407,55 +407,55 @@ jobs:
           path: .coverage.*
           include-hidden-files: true
 
-  # coverage:
-  #   needs:
-  #     - test-sqlite
-  #     - test-postgres
-  #     - test-mysql
-  #     - test-sqlite-elasticsearch8
-  #     - test-postgres-elasticsearch7
-  #     - test-sqlite-opensearch2
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out the repo
-  #       uses: actions/checkout@v4
-  #       with:
-  #         persist-credentials: false
+  coverage:
+    needs:
+      - test-sqlite
+      - test-postgres
+      - test-mysql
+      - test-sqlite-elasticsearch8
+      - test-postgres-elasticsearch7
+      - test-sqlite-opensearch2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install coverage
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage
 
-  #     - name: Download coverage data
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         pattern: coverage-data-*
-  #         merge-multiple: true
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
 
-  #     - name: Combine coverage data
-  #       run: |
-  #         coverage combine
+      - name: Combine coverage data
+        run: |
+          coverage combine
 
-  #     - name: Generate coverage report
-  #       run: |
-  #         coverage report -m --skip-covered --skip-empty | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY
-  #         coverage html --skip-covered --skip-empty
+      - name: Generate coverage report
+        run: |
+          coverage report -m --skip-covered --skip-empty | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY
+          coverage html --skip-covered --skip-empty
 
-  #     - name: Upload HTML report as artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: coverage-report
-  #         path: coverage_html_report
-  #         include-hidden-files: true
+      - name: Upload HTML report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_html_report
+          include-hidden-files: true
 
-  #     - name: Upload coverage to Codecov
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         flags: backend
-  #         token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
