@@ -6,7 +6,7 @@ from unittest import mock
 from django.db.models import Q
 from django.test import TestCase
 
-from wagtail.search.query import MATCH_ALL, Fuzzy, Phrase
+from wagtail.search.query import MATCH_ALL, Boost, Fuzzy, Phrase
 from wagtail.test.search import models
 
 from .elasticsearch_common_tests import ElasticsearchCommonSearchBackendTests
@@ -830,6 +830,27 @@ class TestElasticsearch7SearchQuery(TestCase):
 
         expected_result = {
             "multi_match": {
+                "fields": [
+                    "title^2.0",
+                    "summary",
+                ],
+                "query": "Hello world",
+                "fuzziness": "AUTO",
+            }
+        }
+        self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
+
+    def test_fuzzy_query_multiple_fields_with_query_boost(self):
+        # Create a query
+        query_compiler = self.query_compiler_class(
+            models.Book.objects.all(),
+            Boost(Fuzzy("Hello world"), boost=3.0),
+            fields=["title", "summary"],
+        )
+
+        expected_result = {
+            "multi_match": {
+                "boost": 3.0,
                 "fields": [
                     "title^2.0",
                     "summary",
