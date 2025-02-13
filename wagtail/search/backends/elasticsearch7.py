@@ -614,12 +614,10 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
 
         if len(fields) == 1:
             if fields[0].boost != 1.0:
-                print(f"Adding single field boost: {boost}")
                 match_query["boost"] = boost * fields[0].boost
             return {"match": {fields[0].field_name: match_query}}
         else:
             if boost != 1.0:
-                print(f"Adding multi field boost: {boost}")
                 match_query["boost"] = boost
             match_query["fields"] = [field.field_name_with_boost for field in fields]
             return {"multi_match": match_query}
