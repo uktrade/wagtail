@@ -732,6 +732,9 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
                 }
             }
 
+        elif isinstance(self.query, Boost):
+            return self._join_and_compile_queries(self.query, fields, self.query.boost)
+
         else:
             return self._join_and_compile_queries(self.query, fields)
 
