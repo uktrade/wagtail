@@ -1,4 +1,5 @@
 import unittest
+from unittest import skip
 
 from django.db import connection
 from django.test import TestCase
@@ -21,6 +22,10 @@ from wagtail.test.search import models
 )
 class TestPostgresSearchBackend(BackendTests, TestCase):
     backend_path = "wagtail.search.backends.database.postgres.postgres"
+
+    @skip("The Postgres backend doesn't support subquery filtering.")
+    def test_filtered(self):
+        return super().test_filtered()
 
     def test_weights(self):
         from ..backends.database.postgres.weights import (
