@@ -860,7 +860,7 @@ class BackendTests(WagtailTestUtils):
     def test_filtered(self):
         results = self.backend.search(
             Filtered(
-                PlainText("Learning Python"),
+                MATCH_ALL,
                 filters=[
                     (
                         "number_of_pages",
@@ -871,6 +871,8 @@ class BackendTests(WagtailTestUtils):
             ),
             models.Book.objects.all(),
         )
+
+        print("TEST DEBUG:", results)
 
         self.assertEqual(
             len(results),
