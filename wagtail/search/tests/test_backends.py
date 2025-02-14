@@ -865,7 +865,7 @@ class BackendTests(WagtailTestUtils):
                     (
                         "number_of_pages",
                         "in",
-                        "1160",
+                        ["1160"],
                     )
                 ],
             ),
@@ -890,7 +890,7 @@ class BackendTests(WagtailTestUtils):
                     (
                         "number_of_pages",
                         "notin",
-                        "1160",
+                        ["1160"],
                     )
                 ],
             ),
