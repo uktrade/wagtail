@@ -38,7 +38,16 @@ from wagtail.search.index import (
     get_indexed_models,
 )
 from wagtail.search.models import IndexEntry
-from wagtail.search.query import And, Boost, MatchAll, Not, Or, Phrase, PlainText
+from wagtail.search.query import (
+    And,
+    Boost,
+    Filtered,
+    MatchAll,
+    Not,
+    Or,
+    Phrase,
+    PlainText,
+)
 from wagtail.search.utils import (
     OR,
     balanced_reduce,
@@ -371,6 +380,13 @@ class MySQLSearchQueryCompiler(BaseSearchQueryCompiler):
         elif isinstance(query, Boost):
             # Not supported
             msg = "The Boost query is not supported by the MySQL search backend."
+            warnings.warn(msg, RuntimeWarning)
+
+            return self.build_search_query_content(query.subquery, invert=invert)
+
+        elif isinstance(query, Filtered):
+            # Not supported
+            msg = "The Filtered query is not supported by the MySQL search backend."
             warnings.warn(msg, RuntimeWarning)
 
             return self.build_search_query_content(query.subquery, invert=invert)
