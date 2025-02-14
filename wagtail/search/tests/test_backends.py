@@ -884,7 +884,7 @@ class BackendTests(WagtailTestUtils):
 
         results = self.backend.search(
             Filtered(
-                PlainText("Learning Python"),
+                MATCH_ALL,
                 filters=[
                     (
                         "number_of_pages",
@@ -907,7 +907,7 @@ class BackendTests(WagtailTestUtils):
 
         results = self.backend.search(
             Filtered(
-                PlainText("Learning Python"),
+                MATCH_ALL,
                 filters=[
                     (
                         "number_of_pages",
@@ -930,7 +930,7 @@ class BackendTests(WagtailTestUtils):
 
         results = self.backend.search(
             Filtered(
-                PlainText("Learning Python"),
+                MATCH_ALL,
                 filters=[
                     (
                         "number_of_pages",
