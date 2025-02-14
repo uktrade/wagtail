@@ -25,6 +25,7 @@ from wagtail.search.query import (
     MATCH_NONE,
     And,
     Boost,
+    Filtered,
     Not,
     Or,
     Phrase,
@@ -854,6 +855,103 @@ class BackendTests(WagtailTestUtils):
                 "JavaScript: The Definitive Guide",
                 "Learning Python",
             ],
+        )
+
+    def test_filtered(self):
+        results = self.backend.search(
+            Filtered(
+                MATCH_ALL,
+                filters=[
+                    (
+                        "number_of_pages",
+                        "in",
+                        [1160],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            1,
+        )
+        self.assertEqual(
+            [r.title for r in results],
+            ["Learning Python"],
+        )
+
+        results = self.backend.search(
+            Filtered(
+                MATCH_ALL,
+                filters=[
+                    (
+                        "number_of_pages",
+                        "notin",
+                        [1160],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            13,
+        )
+        self.assertNotIn(
+            "Learning Python",
+            [r.title for r in results],
+        )
+
+        results = self.backend.search(
+            Filtered(
+                MATCH_ALL,
+                filters=[
+                    (
+                        "number_of_pages",
+                        "in",
+                        [1160, 556],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            2,
+        )
+        self.assertEqual(
+            [r.title for r in results],
+            ["Learning Python", "Two Scoops of Django 1.11"],
+        )
+
+        results = self.backend.search(
+            Filtered(
+                MATCH_ALL,
+                filters=[
+                    (
+                        "number_of_pages",
+                        "notin",
+                        [1160, 556],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            12,
+        )
+        self.assertNotIn(
+            "Learning Python",
+            [r.title for r in results],
+        )
+        self.assertNotIn(
+            "Two Scoops of Django 1.11",
+            [r.title for r in results],
         )
 
     def test_match_all(self):

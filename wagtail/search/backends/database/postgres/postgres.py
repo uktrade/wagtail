@@ -18,7 +18,7 @@ from django.utils.functional import cached_property
 
 from ....index import AutocompleteField, RelatedFields, SearchField, get_indexed_models
 from ....models import IndexEntry
-from ....query import And, Boost, MatchAll, Not, Or, Phrase, PlainText
+from ....query import And, Boost, Filtered, MatchAll, Not, Or, Phrase, PlainText
 from ....utils import (
     ADD,
     MUL,
@@ -400,6 +400,17 @@ class PostgresSearchQueryCompiler(BaseSearchQueryCompiler):
         elif isinstance(query, Boost):
             # Not supported
             msg = "The Boost query is not supported by the PostgreSQL search backend."
+            warnings.warn(msg, RuntimeWarning)
+
+            return self.build_tsquery_content(
+                query.subquery, config=config, invert=invert
+            )
+
+        elif isinstance(query, Filtered):
+            # Not supported
+            msg = (
+                "The Filtered query is not supported by the PostgreSQL search backend."
+            )
             warnings.warn(msg, RuntimeWarning)
 
             return self.build_tsquery_content(

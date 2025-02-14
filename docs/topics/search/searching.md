@@ -259,6 +259,21 @@ For example:
 
 Note that this isn't supported by the PostgreSQL or database search backends.
 
+`Filtered(query, filters)`
+
+This class filters the subquery to only run on documents that match the filters.
+
+For example:
+
+```python
+>>> from wagtail.search.query import PlainText, Filtered
+
+# This example will match the phrase "hello world" but only on documents with the number_of_pages equal to "1160"
+>>> Page.objects.search(Filtered(Phrase("Hello world"), filters=[("number_of_pages", "in", [1160])]))
+```
+
+Note that this isn't supported by the PostgreSQL or database search backends.
+
 (wagtailsearch_query_string_parsing)=
 
 ### Query string parsing

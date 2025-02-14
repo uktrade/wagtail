@@ -12,7 +12,16 @@ from wagtail.search.backends.base import (
     BaseSearchResults,
     FilterFieldError,
 )
-from wagtail.search.query import And, Boost, MatchAll, Not, Or, Phrase, PlainText
+from wagtail.search.query import (
+    And,
+    Boost,
+    Filtered,
+    MatchAll,
+    Not,
+    Or,
+    Phrase,
+    PlainText,
+)
 from wagtail.search.utils import AND, OR
 
 # This file implements a database search backend using basic substring matching, and no
@@ -103,6 +112,9 @@ class DatabaseSearchQueryCompiler(BaseSearchQueryCompiler):
 
         if isinstance(query, Boost):
             boost *= query.boost
+            return self.build_database_filter(query.subquery, boost=boost)
+
+        if isinstance(query, Filtered):
             return self.build_database_filter(query.subquery, boost=boost)
 
         if isinstance(query, MatchAll):

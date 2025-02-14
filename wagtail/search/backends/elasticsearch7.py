@@ -27,7 +27,17 @@ from wagtail.search.index import (
     class_is_indexed,
     get_indexed_models,
 )
-from wagtail.search.query import And, Boost, Fuzzy, MatchAll, Not, Or, Phrase, PlainText
+from wagtail.search.query import (
+    And,
+    Boost,
+    Filtered,
+    Fuzzy,
+    MatchAll,
+    Not,
+    Or,
+    Phrase,
+    PlainText,
+)
 from wagtail.utils.utils import deep_update
 
 use_new_elasticsearch_api = ELASTICSEARCH_VERSION >= (7, 15)
@@ -551,7 +561,7 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
                 }
             }
 
-        if lookup == "in":
+        if lookup in ["in", "notin"]:
             if isinstance(value, Query):
                 db_alias = self.queryset._db or DEFAULT_DB_ALIAS
                 resultset = value.get_compiler(db_alias).execute_sql(result_type=MULTI)
@@ -559,11 +569,17 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
 
             elif not isinstance(value, list):
                 value = list(value)
-            return {
+
+            in_query = {
                 "terms": {
                     column_name: value,
                 }
             }
+
+            if lookup == "notin":
+                return {"bool": {"mustNot": in_query}}
+
+            return in_query
 
     def _process_match_none(self):
         return {"bool": {"mustNot": {"match_all": {}}}}
@@ -642,6 +658,20 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
                 }
             }
 
+    def _compile_filtered_query(self, query, fields, boost=1.0):
+        """
+        Add OS DSL elements to support Filtered fields
+        """
+
+        processed_filters = [self._process_filter(*f) for f in query.filters]
+
+        return {
+            "bool": {
+                "must": self._join_and_compile_queries(query.subquery, fields, boost),
+                "filter": self._connect_filters(processed_filters, "AND", False),
+            }
+        }
+
     def _compile_query(self, query, field, boost=1.0):
         if isinstance(query, MatchAll):
             match_all_query = {}
@@ -687,6 +717,9 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
 
         elif isinstance(query, Boost):
             return self._compile_query(query.subquery, field, boost * query.boost)
+
+        elif isinstance(query, Filtered):
+            return self._compile_filtered_query(query, [field], boost)
 
         else:
             raise NotImplementedError(
