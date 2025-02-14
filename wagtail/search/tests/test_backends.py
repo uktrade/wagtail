@@ -865,14 +865,12 @@ class BackendTests(WagtailTestUtils):
                     (
                         "number_of_pages",
                         "in",
-                        ["1160"],
+                        [1160],
                     )
                 ],
             ),
             models.Book.objects.all(),
         )
-
-        print("TEST DEBUG:", results)
 
         self.assertEqual(
             len(results),
@@ -881,8 +879,9 @@ class BackendTests(WagtailTestUtils):
         # NEED TO WRITE THIS TEST
         self.assertEqual(
             [r.title for r in results],
-            False,
+            ["Learning Python"],
         )
+
         results = self.backend.search(
             Filtered(
                 PlainText("Learning Python"),
@@ -890,7 +889,7 @@ class BackendTests(WagtailTestUtils):
                     (
                         "number_of_pages",
                         "notin",
-                        ["1160"],
+                        [1160],
                     )
                 ],
             ),
@@ -901,10 +900,59 @@ class BackendTests(WagtailTestUtils):
             len(results),
             13,
         )
-        # NEED TO WRITE THIS TEST
+        self.assertNotIn(
+            "Learning Python",
+            [r.title for r in results],
+        )
+
+        results = self.backend.search(
+            Filtered(
+                PlainText("Learning Python"),
+                filters=[
+                    (
+                        "number_of_pages",
+                        "in",
+                        [1160, 556],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            2,
+        )
         self.assertEqual(
             [r.title for r in results],
-            False,
+            ["Learning Python", "Two Scoops of Django 1.11"],
+        )
+
+        results = self.backend.search(
+            Filtered(
+                PlainText("Learning Python"),
+                filters=[
+                    (
+                        "number_of_pages",
+                        "notin",
+                        [1160, 556],
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            12,
+        )
+        self.assertNotIn(
+            "Learning Python",
+            [r.title for r in results],
+        )
+        self.assertNotIn(
+            "Two Scoops of Django 1.11",
+            [r.title for r in results],
         )
 
     def test_match_all(self):
