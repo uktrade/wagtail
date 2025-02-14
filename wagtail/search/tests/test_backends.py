@@ -872,6 +872,8 @@ class BackendTests(WagtailTestUtils):
             models.Book.objects.all(),
         )
 
+        print("TEST DEBUG:", results)
+
         self.assertEqual(
             len(results),
             1,
