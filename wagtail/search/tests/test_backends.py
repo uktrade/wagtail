@@ -864,7 +864,7 @@ class BackendTests(WagtailTestUtils):
                 filters=[
                     (
                         "number_of_pages",
-                        "is",
+                        "in",
                         "1160",
                     )
                 ],
@@ -887,7 +887,7 @@ class BackendTests(WagtailTestUtils):
                 filters=[
                     (
                         "number_of_pages",
-                        "isnot",
+                        "notin",
                         "1160",
                     )
                 ],
