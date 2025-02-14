@@ -863,15 +863,42 @@ class BackendTests(WagtailTestUtils):
                 PlainText("Learning Python"),
                 filters=[
                     (
-                        "programming_language",
-                        "contains",
-                        "py",
+                        "number_of_pages",
+                        "is",
+                        "1160",
                     )
                 ],
             ),
             models.Book.objects.all(),
         )
 
+        self.assertEqual(
+            len(results),
+            1,
+        )
+        # NEED TO WRITE THIS TEST
+        self.assertEqual(
+            [r.title for r in results],
+            False,
+        )
+        results = self.backend.search(
+            Filtered(
+                PlainText("Learning Python"),
+                filters=[
+                    (
+                        "number_of_pages",
+                        "isnot",
+                        "1160",
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        self.assertEqual(
+            len(results),
+            13,
+        )
         # NEED TO WRITE THIS TEST
         self.assertEqual(
             [r.title for r in results],
