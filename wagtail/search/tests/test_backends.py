@@ -25,6 +25,7 @@ from wagtail.search.query import (
     MATCH_NONE,
     And,
     Boost,
+    Filtered,
     Not,
     Or,
     Phrase,
@@ -854,6 +855,27 @@ class BackendTests(WagtailTestUtils):
                 "JavaScript: The Definitive Guide",
                 "Learning Python",
             ],
+        )
+
+    def test_filtered(self):
+        results = self.backend.search(
+            Filtered(
+                PlainText("Learning Python"),
+                filters=[
+                    (
+                        "programming_language",
+                        "contains",
+                        "py",
+                    )
+                ],
+            ),
+            models.Book.objects.all(),
+        )
+
+        # NEED TO WRITE THIS TEST
+        self.assertEqual(
+            [r.title for r in results],
+            False,
         )
 
     def test_match_all(self):

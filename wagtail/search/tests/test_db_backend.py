@@ -60,3 +60,8 @@ class TestDBBackend(BackendTests, TestCase):
     @unittest.expectedFailure
     def test_boost(self):
         super().test_boost()
+
+    # Database backend doesn't support Filtered() query class
+    @unittest.expectedFailure
+    def test_filtered(self):
+        super().test_filtered()
