@@ -6,7 +6,7 @@ from unittest import mock
 from django.db.models import Q
 from django.test import TestCase
 
-from wagtail.search.query import MATCH_ALL, Fuzzy, Phrase
+from wagtail.search.query import MATCH_ALL, Boost, Fuzzy, Phrase
 from wagtail.test.search import models
 
 from .elasticsearch_common_tests import ElasticsearchCommonSearchBackendTests
@@ -763,6 +763,30 @@ class TestElasticsearch7SearchQuery(TestCase):
         }
         self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
 
+    def test_phrase_query_multiple_fields_and_query_boost(self):
+        # Create a query
+        query_compiler = self.query_compiler_class(
+            models.Book.objects.all(),
+            Boost(Phrase("Hello world"), boost=3.0),
+            fields=["title", "summary"],
+        )
+
+        # Check it
+        expected_result = {
+            "dis_max": {
+                "queries": [
+                    {"match_phrase": {"title": {"boost": 6.0, "query": "Hello world"}}},
+                    {
+                        "match_phrase": {
+                            "summary": {"boost": 3.0, "query": "Hello world"}
+                        }
+                    },
+                ]
+            }
+        }
+
+        self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
+
     def test_phrase_query_single_field(self):
         # Create a query
         query_compiler = self.query_compiler_class(
@@ -775,6 +799,25 @@ class TestElasticsearch7SearchQuery(TestCase):
                 "title": {
                     "query": "Hello world",
                     "boost": 2.0,
+                },
+            },
+        }
+        self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
+
+    def test_phrase_query_single_field_and_query_boost(self):
+        # Create a query
+        query_compiler = self.query_compiler_class(
+            models.Book.objects.all(),
+            Boost(Phrase("Hello world"), boost=3.0),
+            fields=["title"],
+        )
+
+        # Check it
+        expected_result = {
+            "match_phrase": {
+                "title": {
+                    "query": "Hello world",
+                    "boost": 6.0,
                 },
             },
         }
@@ -820,6 +863,26 @@ class TestElasticsearch7SearchQuery(TestCase):
         }
         self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
 
+    def test_fuzzy_query_single_field_with_query_boost(self):
+        # Create a query
+        query_compiler = self.query_compiler_class(
+            models.Book.objects.all(),
+            Boost(Fuzzy("Hello world"), boost=3.0),
+            fields=["title"],
+        )
+
+        # Check it
+        expected_result = {
+            "match": {
+                "title": {
+                    "query": "Hello world",
+                    "fuzziness": "AUTO",
+                    "boost": 6.0,
+                },
+            }
+        }
+        self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
+
     def test_fuzzy_query_multiple_fields(self):
         # Create a query
         query_compiler = self.query_compiler_class(
@@ -836,6 +899,40 @@ class TestElasticsearch7SearchQuery(TestCase):
                 ],
                 "query": "Hello world",
                 "fuzziness": "AUTO",
+            }
+        }
+        self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
+
+    def test_fuzzy_query_multiple_fields_with_query_boost(self):
+        # Create a query
+        query_compiler = self.query_compiler_class(
+            models.Book.objects.all(),
+            Boost(Fuzzy("Hello world"), boost=3.0),
+            fields=["title", "summary"],
+        )
+
+        expected_result = {
+            "dis_max": {
+                "queries": [
+                    {
+                        "match": {
+                            "title": {
+                                "boost": 6.0,
+                                "fuzziness": "AUTO",
+                                "query": "Hello world",
+                            }
+                        }
+                    },
+                    {
+                        "match": {
+                            "summary": {
+                                "boost": 3.0,
+                                "fuzziness": "AUTO",
+                                "query": "Hello world",
+                            }
+                        }
+                    },
+                ]
             }
         }
         self.assertDictEqual(query_compiler.get_inner_query(), expected_result)
