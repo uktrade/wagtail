@@ -268,7 +268,7 @@ For example:
 ```python
 >>> from wagtail.search.query import PlainText, Filtered
 
-# This example will match the phrase "hello world" but only on documents with the content type "blog.BlogPage"
+# This example will match the phrase "hello world" but only on documents with the number_of_pages equal to "1160"
 >>> Page.objects.search(Filtered(Phrase("Hello world"), filters=[("number_of_pages", "in", [1160])]))
 ```
 

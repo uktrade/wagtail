@@ -876,7 +876,6 @@ class BackendTests(WagtailTestUtils):
             len(results),
             1,
         )
-        # NEED TO WRITE THIS TEST
         self.assertEqual(
             [r.title for r in results],
             ["Learning Python"],
