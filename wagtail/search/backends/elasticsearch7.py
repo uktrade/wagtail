@@ -562,7 +562,6 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
             }
 
         if lookup in ["in", "notin"]:
-            print(f"DEBUG: building lookup {lookup} for {value}")
             if isinstance(value, Query):
                 db_alias = self.queryset._db or DEFAULT_DB_ALIAS
                 resultset = value.get_compiler(db_alias).execute_sql(result_type=MULTI)
@@ -570,8 +569,6 @@ class Elasticsearch7SearchQueryCompiler(BaseSearchQueryCompiler):
 
             elif not isinstance(value, list):
                 value = list(value)
-
-            print(f"DEBUG: altered value {value}")
 
             in_query = {
                 "terms": {
