@@ -35,6 +35,10 @@ class TestSQLiteSearchBackend(BackendTests, TestCase):
     def test_boost(self):
         return super().test_boost()
 
+    @skip("The SQLite backend doesn't support subquery filtering.")
+    def test_filtered(self):
+        return super().test_filtered()
+
     @skip("The SQLite backend doesn't score annotations.")
     def test_annotate_score(self):
         return super().test_annotate_score()
