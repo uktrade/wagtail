@@ -269,8 +269,7 @@ For example:
 >>> from wagtail.search.query import PlainText, Filtered
 
 # This example will match the phrase "hello world" but only on documents with the content type "blog.BlogPage"
->>> Page.objects.search(Filtered(Phrase("Hello world"), filters=[
-                    ("content_type","contains","blog.BlogPage",)]))
+>>> Page.objects.search(Filtered(Phrase("Hello world"), filters=[("number_of_pages", "in", [1160])]))
 ```
 
 Note that this isn't supported by the PostgreSQL or database search backends.
